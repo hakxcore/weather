@@ -1,5 +1,5 @@
 var container = $('.container');
-var card = $('#card');
+var card = $('`#card');
 var innerSVG = Snap('#inner');
 var outerSVG = Snap('#outer');
 var backSVG = Snap('#back');
