@@ -64,5 +64,74 @@
 <script src='https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.4.1/snap.svg-min.js'></script>
 <script src='https://codepen.io/ste-vg/pen/zBVaZw.js'></script><script  src="./script.js"></script>
 
+
+<script>
+	// Function to fetch weather data from OpenWeatherMap API
+function fetchWeatherData(city) {
+  const apiKey = '74256766d07be9e6599493a1554af727'; // Replace with your OpenWeatherMap API key
+  const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+  return fetch(apiUrl)
+    .then(response => response.json())
+    .catch(error => console.log('Error:', error));
+}
+
+// Function to update weather information on the webpage
+function updateWeatherInformation(city) {
+  fetchWeatherData(city)
+    .then(data => {
+      // Extract the required weather information from the API response
+      const temperature = data.main.temp;
+      const summary = data.weather[0].description;
+      const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+      // Update the weather information on the webpage
+    //   document.getElementById('temp').textContent = temperature;
+    //   document.getElementById('summary').textContent = summary;
+    //   document.getElementById('date').textContent = date;
+	  // Select the elements in the HTML
+		const tempElement = document.querySelector('.temp');
+		const dateElement = document.querySelector('#date');
+		const summaryElement = document.querySelector('#summary');
+		// Update the HTML elements with the new values
+		tempElement.innerHTML = `${temperature}<span>c</span>`;
+    	dateElement.innerHTML = date;
+    	summaryElement.innerHTML = summary;
+    })
+	.catch(error => {
+    console.log('Error:', error);
+  });
+}
+
+// Get the user's location and update the weather information
+function getWeatherByLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(position => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      // Fetch the city name using reverse geocoding API or manually set a default city
+      const city = 'New York'; // Set your desired default city here if reverse geocoding is not used
+
+      // Call the function to update the weather information
+      updateWeatherInformation(city);
+    }, error => {
+      console.log('Error getting location:', error);
+      // Set a default city in case the user denies location access
+      const city = 'New York'; // Set your desired default city here
+      updateWeatherInformation(city);
+    });
+  } else {
+    console.log('Geolocation is not supported by this browser.');
+    // Set a default city if geolocation is not supported
+    const city = 'New York'; // Set your desired default city here
+    updateWeatherInformation(city);
+  }
+}
+
+// Call the function to get the weather information by location
+getWeatherByLocation();
+
+</script>
 </body>
 </html>
