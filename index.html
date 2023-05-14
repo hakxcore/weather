@@ -66,7 +66,7 @@
 
 
 <script>
-	// Function to fetch weather data from OpenWeatherMap API
+// Function to fetch weather data from OpenWeatherMap API
 function fetchWeatherData(city) {
   const apiKey = '74256766d07be9e6599493a1554af727'; // Replace with your OpenWeatherMap API key
   const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
@@ -74,6 +74,27 @@ function fetchWeatherData(city) {
   return fetch(apiUrl)
     .then(response => response.json())
     .catch(error => console.log('Error:', error));
+}
+
+// Function to fetch city name using reverse geocoding from OpenCage Geocoding API
+function fetchCityName(latitude, longitude, apiKey) {
+  const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${apiKey}`;
+
+  return fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      const results = data.results;
+      if (results.length > 0) {
+        const city = results[0].components.city || results[0].components.town || results[0].components.village;
+        return city;
+      } else {
+        throw new Error('City not found');
+      }
+    })
+    .catch(error => {
+      console.log('Error:', error);
+      return null;
+    });
 }
 
 // Function to update weather information on the webpage
@@ -85,53 +106,58 @@ function updateWeatherInformation(city) {
       const summary = data.weather[0].description;
       const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
-      // Update the weather information on the webpage
-    //   document.getElementById('temp').textContent = temperature;
-    //   document.getElementById('summary').textContent = summary;
-    //   document.getElementById('date').textContent = date;
-	  // Select the elements in the HTML
-		const tempElement = document.querySelector('.temp');
-		const dateElement = document.querySelector('#date');
-		const summaryElement = document.querySelector('#summary');
-		// Update the HTML elements with the new values
-		tempElement.innerHTML = `${temperature}<span>c</span>`;
-    	dateElement.innerHTML = date;
-    	summaryElement.innerHTML = summary;
+      // Select the elements in the HTML
+      const tempElement = document.querySelector('.temp');
+      const dateElement = document.querySelector('#date');
+      const summaryElement = document.querySelector('#summary');
+      // Update the HTML elements with the new values
+      tempElement.innerHTML = `${Math.round(temperature)}<span>c</span>`;
+      dateElement.innerHTML = date;
+      summaryElement.innerHTML = summary;
     })
-	.catch(error => {
-    console.log('Error:', error);
-  });
+    .catch(error => {
+      console.log('Error:', error);
+    });
 }
 
 // Get the user's location and update the weather information
 function getWeatherByLocation() {
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(position => {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        const apiKey = '7626972b40934b10bea7429794430642'; // Replace with your OpenCage Geocoding API key
 
-      // Fetch the city name using reverse geocoding API or manually set a default city
-      const city = 'New York'; // Set your desired default city here if reverse geocoding is not used
-
-      // Call the function to update the weather information
-      updateWeatherInformation(city);
-    }, error => {
-      console.log('Error getting location:', error);
-      // Set a default city in case the user denies location access
-      const city = 'New York'; // Set your desired default city here
-      updateWeatherInformation(city);
-    });
-  } else {
-    console.log('Geolocation is not supported by this browser.');
-    // Set a default city if geolocation is not supported
-    const city = 'New York'; // Set your desired default city here
-    updateWeatherInformation(city);
-  }
+        fetchCityName(latitude, longitude, apiKey)
+          .then(city => {
+            // Call the function to update the weather information with the fetched city name
+            updateWeatherInformation(city);
+          })
+          .catch(error => {
+            console.log('Error:', error);
+            // Set a default city in case reverse geocoding fails
+            const defaultCity = 'New York'; // Set your desired default city here
+            updateWeatherInformation(defaultCity);
+          });
+        },
+		error => {
+			console.log('Error getting location:', error);
+			// Set a default city in case the user denies location access
+			const defaultCity = 'New York'; // Set your desired default city here
+			updateWeatherInformation(defaultCity);
+		}
+    );
+} else {
+	console.log('Geolocation is not supported by this browser.');
+	// Set a default city if geolocation is not supported
+	const city = 'New York'; // Set your desired default city here
+	updateWeatherInformation(city);
+}
 }
 
 // Call the function to get the weather information by location
 getWeatherByLocation();
-
 </script>
 </body>
 </html>
