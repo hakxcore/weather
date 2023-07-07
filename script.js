@@ -1,5 +1,7 @@
+// 📝 Fetch all DOM nodes in jQuery and Snap SVG
+
 var container = $('.container');
-var card = $('`#card');
+var card = $('#card');
 var innerSVG = Snap('#inner');
 var outerSVG = Snap('#outer');
 var backSVG = Snap('#back');
@@ -24,6 +26,103 @@ var outerSnowHolder = outerSVG.group();
 
 var lightningTimeout;
 
+
+// Function to fetch weather data from OpenWeatherMap API
+function fetchWeatherData(city) {
+  const apiKey = '74256766d07be9e6599493a1554af727'; // Replace with your OpenWeatherMap API key
+  const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+  return fetch(apiUrl)
+    .then(response => response.json())
+    .catch(error => console.log('Error:', error));
+}
+
+// Function to fetch city name using reverse geocoding from OpenCage Geocoding API
+function fetchCityName(latitude, longitude, apiKey) {
+  const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${apiKey}`;
+
+  return fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      const results = data.results;
+      if (results.length > 0) {
+        const city = results[0].components.city || results[0].components.town || results[0].components.village;
+        return city;
+      } else {
+        throw new Error('City not found');
+      }
+    })
+    .catch(error => {
+      console.log('Error:', error);
+      return null;
+    });
+}
+
+// Function to update weather information on the webpage
+function updateWeatherInformation(city) {
+  fetchWeatherData(city)
+    .then(data => {
+      // Extract the required weather information from the API response
+      const temperature = data.main.temp;
+      const summary = data.weather[0].description;
+      const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+      // Select the elements in the HTML
+      const tempElement = document.querySelector('.temp');
+      const dateElement = document.querySelector('#date');
+      const summaryElement = document.querySelector('#summary');
+      // Update the HTML elements with the new values
+      tempElement.innerHTML = `${Math.round(temperature)}<span>c</span>`;
+	console.log(temperature);
+      dateElement.innerHTML = date;
+      summaryElement.innerHTML = summary;
+    })
+    .catch(error => {
+      console.log('Error:', error);
+    });
+}
+
+// Get the user's location and update the weather information
+function getWeatherByLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        const apiKey = '7626972b40934b10bea7429794430642'; // Replace with your OpenCage Geocoding API key
+
+        fetchCityName(latitude, longitude, apiKey)
+          .then(city => {
+            // Call the function to update the weather information with the fetched city name
+		console.log(city);
+            updateWeatherInformation(city);
+          })
+          .catch(error => {
+            console.log('Error:', error);
+            // Set a default city in case reverse geocoding fails
+            const defaultCity = 'Mumbai'; // Set your desired default city here
+            updateWeatherInformation(defaultCity);
+          });
+        },
+		error => {
+			console.log('Error getting location:', error);
+			// Set a default city in case the user denies location access
+			const defaultCity = 'Mumbai'; // Set your desired default city here
+			updateWeatherInformation(defaultCity);
+		}
+    );
+} else {
+	console.log('Geolocation is not supported by this browser.');
+	// Set a default city if geolocation is not supported
+	const city = 'Mumbai'; // Set your desired default city here
+	updateWeatherInformation(city);
+}
+}
+
+// Call the function to get the weather information by location
+getWeatherByLocation();
+
+
 // Set mask for leaf holder 
 
 outerLeafHolder.attr({
@@ -47,13 +146,22 @@ var clouds = [
 
 // set weather types ☁️ 🌬 🌧 ⛈ ☀️
 
+// var weather = [
+// 	{ type: 'snow', name: 'Snow'}, 
+// 	{ type: 'wind', name: 'Windy'}, 
+// 	{ type: 'rain', name: 'Rain'}, 
+// 	{ type: 'thunder', name: 'Storms'},
+// 	{ type: 'sun', name: 'Sunny'}
+// ];
+
 var weather = [
-	{ type: 'snow', name: 'Snow'}, 
-	{ type: 'wind', name: 'Windy'}, 
-	{ type: 'rain', name: 'Rain'}, 
-	{ type: 'thunder', name: 'Storms'},
-	{ type: 'sun', name: 'Sunny'}
+  { type: 'snow', name: 'Snow', minTemp: -10, maxTemp: 0 },
+  { type: 'wind', name: 'Windy', minTemp: 0, maxTemp: 15 },
+  { type: 'rain', name: 'Rain', minTemp: 10, maxTemp: 25 },
+  { type: 'thunder', name: 'Storms', minTemp: 20, maxTemp: 35 },
+  { type: 'sun', name: 'Sunny', minTemp: 25, maxTemp: 40 }
 ];
+
 
 // 🛠 app settings
 // in an object so the values can be animated in tweenmax
@@ -93,14 +201,29 @@ function init()
 	
 	// 🖱 bind weather menu buttons
 	
-	for(var i = 0; i < weather.length; i++)
-	{
-		var w = weather[i];
-		var b = $('#button-' + w.type);
-		w.button = b;
-		b.bind('click', w, changeWeather);
-	}
+	// for(var i = 0; i < weather.length; i++)
+	// {
+	// 	var w = weather[i];
+	// 	var b = $('#button-' + w.type);
+	// 	w.button = b;
+	// 	b.bind('click', w, changeWeather);
+	// }
 	
+
+	for (var i = 0; i < weather.length; i++) {
+	var w = weather[i];
+	var b = $('#button-' + w.type);
+	w.button = b;
+	b.bind('click', w, changeWeather);
+
+	// Check if the temperature matches the current weather type
+	if (temperature >= w.minTemp && temperature <= w.maxTemp) {
+		// Trigger the click event for the matching weather type
+		b.trigger('click');
+	}
+	}
+
+
 	// ☁️ draw clouds
 	
 	for(var i = 0; i < clouds.length; i++)

@@ -64,7 +64,6 @@
 <script src='https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.4.1/snap.svg-min.js'></script>
 <script src='https://codepen.io/ste-vg/pen/zBVaZw.js'></script><script  src="./script.js"></script>
 
-
 <script>
 // Function to fetch weather data from OpenWeatherMap API
 function fetchWeatherData(city) {
@@ -112,6 +111,7 @@ function updateWeatherInformation(city) {
       const summaryElement = document.querySelector('#summary');
       // Update the HTML elements with the new values
       tempElement.innerHTML = `${Math.round(temperature)}<span>c</span>`;
+	console.log(temperature);
       dateElement.innerHTML = date;
       summaryElement.innerHTML = summary;
     })
@@ -132,26 +132,27 @@ function getWeatherByLocation() {
         fetchCityName(latitude, longitude, apiKey)
           .then(city => {
             // Call the function to update the weather information with the fetched city name
+		console.log(city);
             updateWeatherInformation(city);
           })
           .catch(error => {
             console.log('Error:', error);
             // Set a default city in case reverse geocoding fails
-            const defaultCity = 'New York'; // Set your desired default city here
+            const defaultCity = 'Mumbai'; // Set your desired default city here
             updateWeatherInformation(defaultCity);
           });
         },
 		error => {
 			console.log('Error getting location:', error);
 			// Set a default city in case the user denies location access
-			const defaultCity = 'New York'; // Set your desired default city here
+			const defaultCity = 'Mumbai'; // Set your desired default city here
 			updateWeatherInformation(defaultCity);
 		}
     );
 } else {
 	console.log('Geolocation is not supported by this browser.');
 	// Set a default city if geolocation is not supported
-	const city = 'New York'; // Set your desired default city here
+	const city = 'Mumbai'; // Set your desired default city here
 	updateWeatherInformation(city);
 }
 }
@@ -159,5 +160,7 @@ function getWeatherByLocation() {
 // Call the function to get the weather information by location
 getWeatherByLocation();
 </script>
+
 </body>
 </html>
+
